@@ -5,6 +5,9 @@
 
 #pragma once
 
+
+#include <SDKDDKVer.h>
+
 /* Include this file instead of including <windows.h> directly. */
 #ifdef NOMINMAX
     #include <windows.h>

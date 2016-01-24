@@ -269,12 +269,12 @@ cofish(
   float const& cosalf)
 {
   FEM_CMN_SVE(cofish);
-  int& nodtot = cmn.nodtot;
+  int nodtot = cmn.nodtot;
   arr_cref<float> x(cmn.x, dimension(100));
   arr_cref<float> y(cmn.y, dimension(100));
   arr_cref<float> costhe(cmn.costhe, dimension(100));
   arr_cref<float> sinthe(cmn.sinthe, dimension(100));
-  float& pi2inv = cmn.pi2inv;
+  float  pi2inv = cmn.pi2inv;
   //
   common_variant cof(cmn.common_cof, sve.cof_bindings);
   if (is_called_first_time) {

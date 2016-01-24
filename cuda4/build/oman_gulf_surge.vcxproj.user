@@ -3,13 +3,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)..\bin\windows\$(Configuration)\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerEnvironment>_NO_DEBUG_HEAP=1
-$(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
+    <LocalDebuggerEnvironment>PATH=$(VCRedistPaths)%PATH%</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|x64'">
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)..\bin\windows\$(Configuration)\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerEnvironment>_NO_DEBUG_HEAP=1
-$(LocalDebuggerEnvironment)</LocalDebuggerEnvironment>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)..\bin\windows\$(Configuration)\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerEnvironment>PATH=$(VCRedistPaths)%PATH%</LocalDebuggerEnvironment>
+    <LocalDebuggerDebuggerType>Auto</LocalDebuggerDebuggerType>
   </PropertyGroup>
 </Project>

@@ -498,9 +498,11 @@ fandm(
   }
   float cd = cfx * cosalf + cfy * sinalf;
   cl = cfy * cosalf - cfx * sinalf;
+  /*
   write(6,
     "(/,/,/,/,'    cd =',f8.5,'    cl =',f8.5,'    cm =',f8.5)"), cd,
     cl, cm;
+    */
   //C
 }
 

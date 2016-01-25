@@ -17,7 +17,6 @@ data_arr_float sinthe;
 int  kutta = 0;
 int& neqns = kutta;
 
-
 using namespace fem::major_types;
 
 struct common_par
@@ -34,6 +33,8 @@ struct common_par
     ptmax(fem::float0)
   {}
 };
+
+common_par  par;
 
 struct common_bod
 {
@@ -72,7 +73,6 @@ struct common_commonymous
 
 struct common :
   fem::common,
-  common_par,
   common_bod,
   common_cpd,
   common_commonymous
@@ -95,13 +95,14 @@ struct common :
 void
 naca45(
   const common& cmn,
+  const common_par& par,
   float const& z,
   float& thick,
   float& camber,
   float& beta)
 {
-  float epsmax = cmn.epsmax;
-  float ptmax = cmn.ptmax;
+  float epsmax = par.epsmax;
+  float ptmax = par.ptmax;
   //
   float dcamdx = fem::float0;
   float w = fem::float0;
@@ -113,13 +114,13 @@ naca45(
   if (z < 1.e-10f) {
     goto statement_100;
   }
-  thick = 5.f * cmn.tau * (.2969f * fem::sqrt(z) - z * (.126f + z * (
+  thick = 5.f * par.tau * (.2969f * fem::sqrt(z) - z * (.126f + z * (
     .3537f - z * (.2843f - z * .1015f))));
   statement_100:
   if (epsmax == 0.f) {
     goto statement_130;
   }
-  if (cmn.naca > 9999) {
+  if (par.naca > 9999) {
     goto statement_140;
   }
   if (z > ptmax) {
@@ -164,6 +165,7 @@ naca45(
 void
 body(
   const common& cmn,
+  const common_par& par,
   float& z,
   float const& sign,
   float& x,
@@ -182,7 +184,7 @@ body(
   float thick = fem::float0;
   float camber = fem::float0;
   float beta = fem::float0;
-  naca45(cmn, z, thick, camber, beta);
+  naca45(cmn, par, z, thick, camber, beta);
   x = z - sign * thick * fem::sin(beta);
   y = camber + sign * thick * fem::cos(beta);
   //C
@@ -222,7 +224,7 @@ setup(
       fract = fem::ffloat(n - 1) / fem::ffloat(npoints);
       z = .5f * (1.f - fem::cos(pi * fract));
       i = nstart + n;
-      body(cmn, z, sign, x(i), y(i));
+      body(cmn, par, z, sign, x(i), y(i));
       write(6, "(f8.4,f10.4)"), x(i), y(i);
     }
     npoints = nupper;
@@ -258,11 +260,11 @@ struct cofish_save
 //C
 void
 cofish(
-  common& cmn,
+  const common& cmn,
   float const& sinalf,
   float const& cosalf)
 {
-  FEM_CMN_SVE(cofish);
+  //FEM_CMN_SVE(cofish);
   int nodtot = cmn.nodtot;
   arr_cref<float> x(cmn.x, dimension(100));
   arr_cref<float> y(cmn.y, dimension(100));
@@ -356,8 +358,8 @@ veldis(
   float const& sinalf,
   float const& cosalf)
 {
-  FEM_CMN_SVE(veldis);
-  int& nodtot = cmn.nodtot;
+  //FEM_CMN_SVE(veldis);
+  const int& nodtot = cmn.nodtot;
   arr_cref<float> x(cmn.x, dimension(100));
   arr_cref<float> y(cmn.y, dimension(100));
 
@@ -484,10 +486,10 @@ struct gauss_save
 //C
 void
 gauss(
-  common& cmn,
+  const common& cmn,
   int const& nrhs)
 {
-  FEM_CMN_SVE(gauss);
+  //FEM_CMN_SVE(gauss);
   
  
   int np = fem::int0;
@@ -579,12 +581,14 @@ gauss(
 //C
 void
 indata(
-  common& cmn)
+  common& cmn,
+  common_par& par
+    )
 {
   // COMMON par
-  int& naca = cmn.naca;
-  float& epsmax = cmn.epsmax;
-  float& ptmax = cmn.ptmax;
+  int& naca = par.naca;
+  float& epsmax = par.epsmax;
+  float& ptmax = par.ptmax;
   //
   //C
   //C  set parameters of body shape, flow
@@ -608,7 +612,7 @@ indata(
   int itau = naca - 1000 * ieps - 100 * iptmax;
   epsmax = ieps * 0.01f;
   ptmax = iptmax * 0.1f;
-  cmn.tau = itau * 0.01f;
+  par.tau = itau * 0.01f;
   if (ieps < 10) {
     return;
   }
@@ -634,7 +638,7 @@ program_panel(
   //C
   float pi = 3.1415926585f;
   //C
-  indata(cmn);
+  indata(cmn, par);
   setup(cmn);
   //C
   float alpha = 5;

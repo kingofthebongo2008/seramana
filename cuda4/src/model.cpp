@@ -3,22 +3,30 @@
 #include "constants.h"
 #include "arrays.h"
 
+#include <ppl.h>
+
 
 namespace hw {
-
-static float cof_memory[101][111];
-static array_2d_mn<float, 101, 111> cof(&cof_memory[0][0]);
 
 typedef array_1d_mn_cpu<float, constants::n > data_arr_float;
 
 data_arr_float costhe;
 data_arr_float sinthe;
 
-//int  kutta = 0;
-//int& neqns = kutta;
 
+struct context
+{
+    float cof_memory[101][111];
+    array_2d_mn<float, 101, 111> cof;
 
+    data_arr_float cp;
 
+    context() :
+    cof(&cof_memory[0][0])
+    {
+
+    }
+};
 
 
 using namespace fem::major_types;
@@ -57,14 +65,6 @@ struct common_bod
 };
 
 
-struct common_cpd
-{
-  arr<float> cp;
-
-  common_cpd() :
-    cp(dimension(100), fem::fill0)
-  {}
-};
 
 struct common_commonymous
 {
@@ -78,18 +78,21 @@ struct common_commonymous
 struct common :
   fem::common,
   common_bod,
-  common_cpd,
   common_commonymous
 {
   fem::cmn_sve cofish_sve;
   fem::cmn_sve veldis_sve;
   fem::cmn_sve gauss_sve;
 
+  float cof_memory[101][111];
+  array_2d_mn<float, 101, 111> cof;
+
   common(
     int argc,
     char const* argv[])
   :
     fem::common(argc, argv)
+    ,cof(&cof_memory[0][0])
   {}
 };
 
@@ -276,8 +279,9 @@ struct cofish_save
 void
 cofish(
   const common& cmn,
-  float const& sinalf,
-  float const& cosalf)
+  float sinalf,
+  float cosalf,
+  context& c    )
 {
   //FEM_CMN_SVE(cofish);
   int nodtot = cmn.nodtot;
@@ -307,7 +311,7 @@ cofish(
   //C  initialize coefficients
   //C
   FEM_DO_SAFE(j, 1, kutta) {
-    cof(kutta, j) = 0.0f;
+   c.cof(kutta, j) = 0.0f;
   }
   //C
   //C  set vn=0. at midpoint of ith panel
@@ -315,7 +319,7 @@ cofish(
   FEM_DO_SAFE(i, 1, nodtot) {
     xmid = .5f * (x(i) + x(i + 1));
     ymid = .5f * (y(i) + y(i + 1));
-    cof(i, kutta) = 0.0f;
+    c.cof(i, kutta) = 0.0f;
     //C
     //C  find contribution of jth panel
     //C
@@ -335,9 +339,9 @@ cofish(
       statement_100:
       ctimtj = costhe(i) * costhe(j) + sinthe(i) * sinthe(j);
       stimtj = sinthe(i) * costhe(j) - sinthe(j) * costhe(i);
-      cof(i, j) = pi2inv * (ftan * ctimtj + flog * stimtj);
+      c.cof(i, j) = pi2inv * (ftan * ctimtj + flog * stimtj);
       b = pi2inv * (flog * ctimtj - ftan * stimtj);
-      cof(i, kutta) += b;
+      c.cof(i, kutta) += b;
       if ((i > 1) && (i < nodtot)) {
         goto statement_110;
       }
@@ -345,16 +349,16 @@ cofish(
       //C  if ith panel touches trailing edge, add contribution
       //C    to kutta condition
       //C
-      cof(kutta, j) = cof(kutta, j) - b;
-      cof(kutta, kutta) += cof(i, j);
+      c.cof(kutta, j) = c.cof(kutta, j) - b;
+      c.cof(kutta, kutta) += c.cof(i, j);
       statement_110:;
     }
     //C
     //C  fill in known sides
     //C
-    cof(i, kutta + 1) = sinthe(i) * cosalf - costhe(i) * sinalf;
+    c.cof(i, kutta + 1) = sinthe(i) * cosalf - costhe(i) * sinalf;
   }
-  cof(kutta, kutta + 1) = -(costhe(1) + costhe(nodtot)) * cosalf - (
+  c.cof(kutta, kutta + 1) = -(costhe(1) + costhe(nodtot)) * cosalf - (
     sinthe(1) + sinthe(nodtot)) * sinalf;
   //C
 }
@@ -370,6 +374,7 @@ struct veldis_save
 void
 veldis(
   common& cmn,
+  context& c,
   float const& sinalf,
   float const& cosalf)
 {
@@ -378,7 +383,7 @@ veldis(
   arr_cref<float> x(cmn.x, dimension(100));
   arr_cref<float> y(cmn.y, dimension(100));
 
-  arr_ref<float> cp(cmn.cp, dimension(100));
+  //arr_ref<float> cp(cmn.cp, dimension(100));
   const float pi2inv = constant_functions::pi2inv();
 
   int i = fem::int0;
@@ -408,9 +413,9 @@ veldis(
   //C  retrieve solution from a-matrix
   //C
   FEM_DO_SAFE(i, 1, nodtot) {
-    q(i) = cof(i, kutta + 1);
+    q(i) = c.cof(i, kutta + 1);
   }
-  gamma = cof(kutta, kutta + 1);
+  gamma = c.cof(kutta, kutta + 1);
   //C
   //C  find vt and cp at midpoint of ith panel
   //C
@@ -441,7 +446,7 @@ veldis(
       b = pi2inv * (flog * ctimtj - ftan * stimtj);
       vtang = vtang - b * q(j) + gamma * aa;
     }
-    cp(i) = 1.f - vtang * vtang;
+    c.cp(i) = 1.f - vtang * vtang;
     //C      write(6,1010)xmid,cp(i)
   }
   //C
@@ -453,6 +458,7 @@ veldis(
 void
 fandm(
   const common& cmn,
+  const context& c,
   float const& sinalf,
   float const& cosalf,
   float& cl)
@@ -460,7 +466,7 @@ fandm(
   arr_cref<float> x(cmn.x, dimension(100));
   arr_cref<float> y(cmn.y, dimension(100));
   // COMMON cpd
-  arr_cref<float> cp(cmn.cp, dimension(100));
+//  arr_cref<float> cp(cmn.cp, dimension(100));
   //
   //C
   //C  compute and print out cd,cl,cmle
@@ -479,9 +485,9 @@ fandm(
     ymid = .5f * (y(i) + y(i + 1));
     dx = x(i + 1) - x(i);
     dy = y(i + 1) - y(i);
-    cfx += cp(i) * dy;
-    cfy = cfy - cp(i) * dx;
-    cm += cp(i) * (dx * xmid + dy * ymid);
+    cfx += c.cp(i) * dy;
+    cfy = cfy - c.cp(i) * dx;
+    cm += c.cp(i) * (dx * xmid + dy * ymid);
   }
   float cd = cfx * cosalf + cfy * sinalf;
   cl = cfy * cosalf - cfx * sinalf;
@@ -503,8 +509,9 @@ struct gauss_save
 //C
 void
 gauss(
-  const common& cmn,
-  int const& nrhs)
+    const common& cmn,
+    context& c,
+    int nrhs)
 {
   //FEM_CMN_SVE(gauss);
   
@@ -545,13 +552,13 @@ gauss(
     //C
     im = i - 1;
     imax = im;
-    amax = fem::abs(cof(im, im));
+    amax = fem::abs(c.cof(im, im));
     FEM_DO_SAFE(j, i, neqns) {
-      if (amax >= fem::abs(cof(j, im))) {
+      if (amax >= fem::abs(c.cof(j, im))) {
         goto statement_110;
       }
       imax = j;
-      amax = fem::abs(cof(j, im));
+      amax = fem::abs(c.cof(j, im));
       statement_110:;
     }
     //C
@@ -561,9 +568,9 @@ gauss(
       goto statement_140;
     }
     FEM_DO_SAFE(j, im, ntot) {
-      temp = cof(im, j);
-      cof(im, j) = cof(imax, j);
-      cof(imax, j) = temp;
+      temp = c.cof(im, j);
+      c.cof(im, j) = c.cof(imax, j);
+      c.cof(imax, j) = temp;
     }
     //C
     //C  eliminate (i-1)th unknown from
@@ -571,9 +578,9 @@ gauss(
     //C
     statement_140:
     FEM_DO_SAFE(j, i, neqns) {
-      r = cof(j, im) / cof(im, im);
+      r = c.cof(j, im) / c.cof(im, im);
       FEM_DO_SAFE(k, i, ntot) {
-          cof(j, k) = cof(j, k) - r * cof(im, k);
+          c.cof(j, k) = c.cof(j, k) - r * c.cof(im, k);
       }
     }
   }
@@ -581,14 +588,14 @@ gauss(
   //C  back substitution
   //C
   FEM_DO_SAFE(k, np, ntot) {
-      cof(neqns, k) = cof(neqns, k) / cof(neqns, neqns);
+      c.cof(neqns, k) = c.cof(neqns, k) / c.cof(neqns, neqns);
     FEM_DO_SAFE(l, 2, neqns) {
       i = neqns + 1 - l;
       ip = i + 1;
       FEM_DO_SAFE(j, ip, neqns) {
-          cof(i, k) = cof(i, k) - cof(i, j) * cof(j, k);
+          c.cof(i, k) = c.cof(i, k) - c.cof(i, j) * c.cof(j, k);
       }
-      cof(i, k) = cof(i, k) / cof(i, i);
+      c.cof(i, k) = c.cof(i, k) / c.cof(i, i);
     }
   }
   //C
@@ -674,27 +681,31 @@ program_panel(
   float tlift = 0.f;
   //C
   int i = fem::int0;
-  float cosalf = fem::float0;
-  float sinalf = fem::float0;
-  float cl = fem::float0;
-  float chord = fem::float0;
-  float area = fem::float0;
-  FEM_DOSTEP(i, 1, 10000, 1) {
-    //C
-    cosalf = fem::cos(alpha * pi / 180.f);
-    sinalf = fem::sin(alpha * pi / 180.f);
-    cofish(cmn, sinalf, cosalf);
-    gauss(cmn, 1);
-    veldis(cmn, sinalf, cosalf);
-    fandm(cmn, sinalf, cosalf, cl);
-    //C
-    alpha = alpha - d_twist;
-    chord = c_root - d_chord * i;
-    area = d_s * chord;
-    //C
-    t_lift(i) = cl * q_dyn * area;
-    //C
-  }
+
+  //concurrency::parallel_for(1, 10000, [ alpha, pi, ds, q_dyn, &cmn ]
+  //{
+      FEM_DOSTEP(i, 1, 10000, 1) {
+          context c;
+
+          float chord = fem::float0;
+          float area = fem::float0;
+          float cl = fem::float0;
+          //C
+          auto cosalf = fem::cos( alpha  * pi / 180.f);
+          auto sinalf = fem::sin( alpha  * pi / 180.f);
+          cofish(cmn, sinalf, cosalf, c);
+          gauss(cmn, c, 1);
+          veldis(cmn, c, sinalf, cosalf);
+          fandm(cmn, c, sinalf, cosalf, cl);
+          //C
+          alpha = alpha - d_twist;
+          chord = c_root - d_chord * i;
+          area = d_s * chord;
+          //C
+          t_lift(i) = cl * q_dyn * area;
+          //C
+      }
+  //});
   //C
   FEM_DOSTEP(i, 1, 10000, 1) {
     tlift += t_lift(i);

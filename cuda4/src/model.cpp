@@ -682,30 +682,25 @@ program_panel(
   //C
   int i = fem::int0;
 
-  //concurrency::parallel_for(1, 10000, [ alpha, pi, ds, q_dyn, &cmn ]
-  //{
-      FEM_DOSTEP(i, 1, 10000, 1) {
+  concurrency::parallel_for(1, 10000, [ &t_lift, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn, &cmn ] ( int i )
+  {
           context c;
 
           float chord = fem::float0;
           float area = fem::float0;
           float cl = fem::float0;
           //C
-          auto cosalf = fem::cos( alpha  * pi / 180.f);
-          auto sinalf = fem::sin( alpha  * pi / 180.f);
+          auto cosalf = fem::cos( (alpha - (d_twist * (i - 1)))  * pi / 180.f);
+          auto sinalf = fem::sin( (alpha - (d_twist * (i - 1)))  * pi / 180.f);
           cofish(cmn, sinalf, cosalf, c);
           gauss(cmn, c, 1);
           veldis(cmn, c, sinalf, cosalf);
           fandm(cmn, c, sinalf, cosalf, cl);
-          //C
-          alpha = alpha - d_twist;
           chord = c_root - d_chord * i;
           area = d_s * chord;
-          //C
           t_lift(i) = cl * q_dyn * area;
-          //C
-      }
-  //});
+  });
+
   //C
   FEM_DOSTEP(i, 1, 10000, 1) {
     tlift += t_lift(i);

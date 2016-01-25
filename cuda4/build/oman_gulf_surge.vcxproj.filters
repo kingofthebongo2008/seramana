@@ -31,5 +31,14 @@
     <ClInclude Include="..\src\cuda_defines.h">
       <Filter>header files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\arrays.h">
+      <Filter>header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\cuda_helper.h">
+      <Filter>header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\linear.h">
+      <Filter>header files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

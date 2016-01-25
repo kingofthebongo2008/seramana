@@ -7,7 +7,7 @@
 
 namespace hw
 { 
-    namespace constants1
+    namespace constants
     {
         static const int m = 10000;
         static const int n = 100;

@@ -1,10 +1,17 @@
 #include <fem.hpp> // Fortran EMulation library of fable module
 
 #include "constants.h"
+#include "arrays.h"
 
-using namespace hw;
 
-namespace placeholder_please_replace {
+namespace hw {
+
+
+typedef array_1d_mn_cpu<float, constants::n > data_arr_float;
+
+data_arr_float costhe;
+data_arr_float sinthe;
+
 
 using namespace fem::major_types;
 
@@ -30,17 +37,12 @@ struct common_bod
   int nodtot;
   arr<float> x;
   arr<float> y;
-  arr<float> costhe;
-  arr<float> sinthe;
-
   common_bod() :
     nlower(fem::int0),
     nupper(fem::int0),
     nodtot(fem::int0),
     x(dimension(100), fem::fill0),
-    y(dimension(100), fem::fill0),
-    costhe(dimension(100), fem::fill0),
-    sinthe(dimension(100), fem::fill0)
+    y(dimension(100), fem::fill0)
   {}
 };
 
@@ -196,8 +198,8 @@ setup(
   int& nodtot = cmn.nodtot;
   arr_ref<float> x(cmn.x, dimension(100));
   arr_ref<float> y(cmn.y, dimension(100));
-  arr_ref<float> costhe(cmn.costhe, dimension(100));
-  arr_ref<float> sinthe(cmn.sinthe, dimension(100));
+//  arr_ref<float> costhe(cmn.costhe, dimension(100));
+//  arr_ref<float> sinthe(cmn.sinthe, dimension(100));
 
   const float pi = constant_functions::pi();
   
@@ -262,8 +264,7 @@ cofish(
   int nodtot = cmn.nodtot;
   arr_cref<float> x(cmn.x, dimension(100));
   arr_cref<float> y(cmn.y, dimension(100));
-  arr_cref<float> costhe(cmn.costhe, dimension(100));
-  arr_cref<float> sinthe(cmn.sinthe, dimension(100));
+
   const float  pi2inv = constant_functions::pi2inv();
   //
   common_variant cof(cmn.common_cof, sve.cof_bindings);
@@ -368,8 +369,7 @@ veldis(
   int& nodtot = cmn.nodtot;
   arr_cref<float> x(cmn.x, dimension(100));
   arr_cref<float> y(cmn.y, dimension(100));
-  arr_cref<float> costhe(cmn.costhe, dimension(100));
-  arr_cref<float> sinthe(cmn.sinthe, dimension(100));
+
   arr_ref<float> cp(cmn.cp, dimension(100));
   const float pi2inv = constant_functions::pi2inv();
   //
@@ -725,5 +725,5 @@ main(
 {
   return fem::main_with_catch(
     argc, argv,
-    placeholder_please_replace::program_panel);
+    hw::program_panel);
 }

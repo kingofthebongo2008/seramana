@@ -100,8 +100,11 @@
     <ClCompile Include="..\src\precompiled.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\arrays.h" />
     <ClInclude Include="..\src\constants.h" />
     <ClInclude Include="..\src\cuda_defines.h" />
+    <ClInclude Include="..\src\cuda_helper.h" />
+    <ClInclude Include="..\src\linear.h" />
     <ClInclude Include="..\src\precompiled.h" />
     <ClInclude Include="..\src\targetver.h" />
   </ItemGroup>

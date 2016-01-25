@@ -6,11 +6,16 @@
 
 namespace hw {
 
+static float cof_memory[101][111];
+static array_2d_mn<float, 101, 111> cof(&cof_memory[0][0]);
 
 typedef array_1d_mn_cpu<float, constants::n > data_arr_float;
 
 data_arr_float costhe;
 data_arr_float sinthe;
+
+int  kutta = 0;
+int& neqns = kutta;
 
 
 using namespace fem::major_types;
@@ -72,7 +77,6 @@ struct common :
   common_cpd,
   common_commonymous
 {
-  fem::variant_core common_cof;
   fem::cmn_sve cofish_sve;
   fem::cmn_sve veldis_sve;
   fem::cmn_sve gauss_sve;
@@ -198,8 +202,6 @@ setup(
   int& nodtot = cmn.nodtot;
   arr_ref<float> x(cmn.x, dimension(100));
   arr_ref<float> y(cmn.y, dimension(100));
-//  arr_ref<float> costhe(cmn.costhe, dimension(100));
-//  arr_ref<float> sinthe(cmn.sinthe, dimension(100));
 
   const float pi = constant_functions::pi();
   
@@ -266,18 +268,7 @@ cofish(
   arr_cref<float> y(cmn.y, dimension(100));
 
   const float  pi2inv = constant_functions::pi2inv();
-  //
-  common_variant cof(cmn.common_cof, sve.cof_bindings);
-  if (is_called_first_time) {
-    using fem::mbr; // member of variant common or equivalence
-    {
-      mbr<float> a(dimension(101, 111));
-      mbr<int> kutta;
-      cof.allocate(), a, kutta;
-    }
-  }
-  arr_ref<float, 2> a(cof.bind<float>(), dimension(101, 111));
-  int& kutta = cof.bind<int>();
+
   int j = fem::int0;
   int i = fem::int0;
   float xmid = fem::float0;
@@ -299,7 +290,7 @@ cofish(
   //C  initialize coefficients
   //C
   FEM_DO_SAFE(j, 1, kutta) {
-    a(kutta, j) = 0.0f;
+    cof(kutta, j) = 0.0f;
   }
   //C
   //C  set vn=0. at midpoint of ith panel
@@ -307,7 +298,7 @@ cofish(
   FEM_DO_SAFE(i, 1, nodtot) {
     xmid = .5f * (x(i) + x(i + 1));
     ymid = .5f * (y(i) + y(i + 1));
-    a(i, kutta) = 0.0f;
+    cof(i, kutta) = 0.0f;
     //C
     //C  find contribution of jth panel
     //C
@@ -327,9 +318,9 @@ cofish(
       statement_100:
       ctimtj = costhe(i) * costhe(j) + sinthe(i) * sinthe(j);
       stimtj = sinthe(i) * costhe(j) - sinthe(j) * costhe(i);
-      a(i, j) = pi2inv * (ftan * ctimtj + flog * stimtj);
+      cof(i, j) = pi2inv * (ftan * ctimtj + flog * stimtj);
       b = pi2inv * (flog * ctimtj - ftan * stimtj);
-      a(i, kutta) += b;
+      cof(i, kutta) += b;
       if ((i > 1) && (i < nodtot)) {
         goto statement_110;
       }
@@ -337,16 +328,16 @@ cofish(
       //C  if ith panel touches trailing edge, add contribution
       //C    to kutta condition
       //C
-      a(kutta, j) = a(kutta, j) - b;
-      a(kutta, kutta) += a(i, j);
+      cof(kutta, j) = cof(kutta, j) - b;
+      cof(kutta, kutta) += cof(i, j);
       statement_110:;
     }
     //C
     //C  fill in known sides
     //C
-    a(i, kutta + 1) = sinthe(i) * cosalf - costhe(i) * sinalf;
+    cof(i, kutta + 1) = sinthe(i) * cosalf - costhe(i) * sinalf;
   }
-  a(kutta, kutta + 1) = -(costhe(1) + costhe(nodtot)) * cosalf - (
+  cof(kutta, kutta + 1) = -(costhe(1) + costhe(nodtot)) * cosalf - (
     sinthe(1) + sinthe(nodtot)) * sinalf;
   //C
 }
@@ -372,18 +363,7 @@ veldis(
 
   arr_ref<float> cp(cmn.cp, dimension(100));
   const float pi2inv = constant_functions::pi2inv();
-  //
-  common_variant cof(cmn.common_cof, sve.cof_bindings);
-  if (is_called_first_time) {
-    using fem::mbr; // member of variant common or equivalence
-    {
-      mbr<float> a(dimension(101, 111));
-      mbr<int> kutta;
-      cof.allocate(), a, kutta;
-    }
-  }
-  arr_cref<float, 2> a(cof.bind<float>(), dimension(101, 111));
-  int const& kutta = cof.bind<int>();
+
   int i = fem::int0;
   arr_1d<150, float> q(fem::fill0);
   float gamma = fem::float0;
@@ -409,9 +389,9 @@ veldis(
   //C  retrieve solution from a-matrix
   //C
   FEM_DO_SAFE(i, 1, nodtot) {
-    q(i) = a(i, kutta + 1);
+    q(i) = cof(i, kutta + 1);
   }
-  gamma = a(kutta, kutta + 1);
+  gamma = cof(kutta, kutta + 1);
   //C
   //C  find vt and cp at midpoint of ith panel
   //C
@@ -453,13 +433,11 @@ veldis(
 //C
 void
 fandm(
-  common& cmn,
+  const common& cmn,
   float const& sinalf,
   float const& cosalf,
   float& cl)
 {
-  common_write write(cmn);
-  // COMMON bod
   arr_cref<float> x(cmn.x, dimension(100));
   arr_cref<float> y(cmn.y, dimension(100));
   // COMMON cpd
@@ -510,17 +488,8 @@ gauss(
   int const& nrhs)
 {
   FEM_CMN_SVE(gauss);
-  common_variant cof(cmn.common_cof, sve.cof_bindings);
-  if (is_called_first_time) {
-    using fem::mbr; // member of variant common or equivalence
-    {
-      mbr<float> a(dimension(101, 111));
-      mbr<int> neqns;
-      cof.allocate(), a, neqns;
-    }
-  }
-  arr_ref<float, 2> a(cof.bind<float>(), dimension(101, 111));
-  int const& neqns = cof.bind<int>();
+  
+ 
   int np = fem::int0;
   int ntot = fem::int0;
   int i = fem::int0;
@@ -556,13 +525,13 @@ gauss(
     //C
     im = i - 1;
     imax = im;
-    amax = fem::abs(a(im, im));
+    amax = fem::abs(cof(im, im));
     FEM_DO_SAFE(j, i, neqns) {
-      if (amax >= fem::abs(a(j, im))) {
+      if (amax >= fem::abs(cof(j, im))) {
         goto statement_110;
       }
       imax = j;
-      amax = fem::abs(a(j, im));
+      amax = fem::abs(cof(j, im));
       statement_110:;
     }
     //C
@@ -572,9 +541,9 @@ gauss(
       goto statement_140;
     }
     FEM_DO_SAFE(j, im, ntot) {
-      temp = a(im, j);
-      a(im, j) = a(imax, j);
-      a(imax, j) = temp;
+      temp = cof(im, j);
+      cof(im, j) = cof(imax, j);
+      cof(imax, j) = temp;
     }
     //C
     //C  eliminate (i-1)th unknown from
@@ -582,9 +551,9 @@ gauss(
     //C
     statement_140:
     FEM_DO_SAFE(j, i, neqns) {
-      r = a(j, im) / a(im, im);
+      r = cof(j, im) / cof(im, im);
       FEM_DO_SAFE(k, i, ntot) {
-        a(j, k) = a(j, k) - r * a(im, k);
+          cof(j, k) = cof(j, k) - r * cof(im, k);
       }
     }
   }
@@ -592,14 +561,14 @@ gauss(
   //C  back substitution
   //C
   FEM_DO_SAFE(k, np, ntot) {
-    a(neqns, k) = a(neqns, k) / a(neqns, neqns);
+      cof(neqns, k) = cof(neqns, k) / cof(neqns, neqns);
     FEM_DO_SAFE(l, 2, neqns) {
       i = neqns + 1 - l;
       ip = i + 1;
       FEM_DO_SAFE(j, ip, neqns) {
-        a(i, k) = a(i, k) - a(i, j) * a(j, k);
+          cof(i, k) = cof(i, k) - cof(i, j) * cof(j, k);
       }
-      a(i, k) = a(i, k) / a(i, i);
+      cof(i, k) = cof(i, k) / cof(i, i);
     }
   }
   //C

@@ -14,8 +14,12 @@ typedef array_1d_mn_cpu<float, constants::n > data_arr_float;
 data_arr_float costhe;
 data_arr_float sinthe;
 
-int  kutta = 0;
-int& neqns = kutta;
+//int  kutta = 0;
+//int& neqns = kutta;
+
+
+
+
 
 using namespace fem::major_types;
 
@@ -88,6 +92,17 @@ struct common :
     fem::common(argc, argv)
   {}
 };
+
+
+inline int kutta(const common& c)
+{
+    return c.nodtot + 1;
+}
+
+inline int neqns(const common& c)
+{
+    return kutta(c);
+}
 
 //C
 //C**********************************************************
@@ -287,7 +302,7 @@ cofish(
   //C
   //C  set coefficients of linear system
   //C
-  kutta = nodtot + 1;
+  auto kutta = hw::kutta(cmn);
   //C
   //C  initialize coefficients
   //C
@@ -383,6 +398,8 @@ veldis(
   float stimtj = fem::float0;
   float aa = fem::float0;
   float b = fem::float0;
+
+  auto kutta = hw::kutta(cmn);
   //C
   //C  compute and print out pressure distribution
   //C
@@ -515,6 +532,7 @@ gauss(
   //C          right-hand sides and solutions stored in
   //C          columns neqns+1 thru neqns+nrhs of a
   //C
+  auto neqns = hw::neqns(cmn);
   np = neqns + 1;
   ntot = neqns + nrhs;
   //C

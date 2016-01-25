@@ -90,14 +90,14 @@ struct common :
 //C
 void
 naca45(
-  common& cmn,
+  const common& cmn,
   float const& z,
   float& thick,
   float& camber,
   float& beta)
 {
-  float& epsmax = cmn.epsmax;
-  float& ptmax = cmn.ptmax;
+  float epsmax = cmn.epsmax;
+  float ptmax = cmn.ptmax;
   //
   float dcamdx = fem::float0;
   float w = fem::float0;
@@ -159,7 +159,7 @@ naca45(
 //C
 void
 body(
-  common& cmn,
+  const common& cmn,
   float& z,
   float const& sign,
   float& x,

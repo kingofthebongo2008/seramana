@@ -1,5 +1,9 @@
 #include <fem.hpp> // Fortran EMulation library of fable module
 
+#include "constants.h"
+
+using namespace hw;
+
 namespace placeholder_please_replace {
 
 using namespace fem::major_types;
@@ -40,16 +44,6 @@ struct common_bod
   {}
 };
 
-struct common_num
-{
-  float pi;
-  float pi2inv;
-
-  common_num() :
-    pi(fem::float0),
-    pi2inv(fem::float0)
-  {}
-};
 
 struct common_cpd
 {
@@ -73,7 +67,6 @@ struct common :
   fem::common,
   common_par,
   common_bod,
-  common_num,
   common_cpd,
   common_commonymous
 {
@@ -205,12 +198,9 @@ setup(
   arr_ref<float> y(cmn.y, dimension(100));
   arr_ref<float> costhe(cmn.costhe, dimension(100));
   arr_ref<float> sinthe(cmn.sinthe, dimension(100));
-  // COMMON num
-  float& pi = cmn.pi;
-  //
-  //C
-  pi = 3.1415926585f;
-  cmn.pi2inv = .5f / pi;
+
+  const float pi = constant_functions::pi();
+  
   //C
   //C  set coordinates of nodes on body surface
   //C
@@ -274,7 +264,7 @@ cofish(
   arr_cref<float> y(cmn.y, dimension(100));
   arr_cref<float> costhe(cmn.costhe, dimension(100));
   arr_cref<float> sinthe(cmn.sinthe, dimension(100));
-  float  pi2inv = cmn.pi2inv;
+  const float  pi2inv = constant_functions::pi2inv();
   //
   common_variant cof(cmn.common_cof, sve.cof_bindings);
   if (is_called_first_time) {
@@ -322,7 +312,7 @@ cofish(
     //C
     FEM_DO_SAFE(j, 1, nodtot) {
       flog = 0.0f;
-      ftan = cmn.pi;
+      ftan = constant_functions::pi();
       if (j == i) {
         goto statement_100;
       }
@@ -381,7 +371,7 @@ veldis(
   arr_cref<float> costhe(cmn.costhe, dimension(100));
   arr_cref<float> sinthe(cmn.sinthe, dimension(100));
   arr_ref<float> cp(cmn.cp, dimension(100));
-  float& pi2inv = cmn.pi2inv;
+  const float pi2inv = constant_functions::pi2inv();
   //
   common_variant cof(cmn.common_cof, sve.cof_bindings);
   if (is_called_first_time) {
@@ -434,7 +424,7 @@ veldis(
     //C
     FEM_DO_SAFE(j, 1, nodtot) {
       flog = 0.0f;
-      ftan = cmn.pi;
+      ftan = constant_functions::pi();
       if (j == i) {
         goto statement_100;
       }

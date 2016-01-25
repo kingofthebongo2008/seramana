@@ -25,5 +25,11 @@
     <ClInclude Include="..\src\precompiled.h">
       <Filter>header files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\constants.h">
+      <Filter>header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\cuda_defines.h">
+      <Filter>header files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

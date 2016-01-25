@@ -4,6 +4,7 @@
 #include "arrays.h"
 
 #include <ppl.h>
+#include <chrono>
 
 
 namespace hw {
@@ -682,6 +683,7 @@ program_panel(
   //C
   int i = fem::int0;
 
+  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
   concurrency::parallel_for(1, 10000, [ &t_lift, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn, &cmn ] ( int i )
   {
           context c;
@@ -700,6 +702,10 @@ program_panel(
           area = d_s * chord;
           t_lift(i) = cl * q_dyn * area;
   });
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+  std::cout << "Filtering on host took: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
 
   //C
   FEM_DOSTEP(i, 1, 10000, 1) {

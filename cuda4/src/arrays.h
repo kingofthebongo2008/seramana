@@ -55,6 +55,43 @@ namespace hw
             return begin() + (height * width);
         }
     };
+
+    template < typename t, int32_t width, int32_t height >
+    class array_2d_mn_fixed
+    {
+        t m_data[width * height];
+
+    public:
+        __host__ __device__ inline t& operator() (int32_t col, int32_t row)
+        {
+            return m_data[ (row - 1) * width + (col - 1) ];
+        }
+
+        __host__ __device__ inline t operator() (int32_t col, int32_t row) const
+        {
+            return m_data[ (row - 1) * width + (col - 1) ];
+        }
+
+        __host__ __device__ inline const t* begin() const
+        {
+            return &m_data[0];
+        }
+
+        __host__ __device__ inline t* begin()
+        {
+            return &m_data[0];
+        }
+
+        __host__ __device__ inline const t* end() const
+        {
+            return begin() + (height * width);
+        }
+
+        __host__ __device__ inline t* end()
+        {
+            return begin() + (height * width);
+        }
+    };
     
     /*
     template < typename t, int32_t width, int32_t height >
@@ -148,6 +185,11 @@ namespace hw
         {
             return begin() + size;
         }
+
+        void set_memory(t* data)
+        {
+            m_data = data;
+        }
     };
 
     
@@ -188,8 +230,6 @@ namespace hw
             return begin() + sizeof(m_data) / sizeof(t);
         }
     };
-
-    
 }
 
 

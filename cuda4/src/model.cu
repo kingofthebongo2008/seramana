@@ -22,18 +22,8 @@ namespace hw {
 
 struct context
 {
-    float cof_memory[101][111];
-    array_2d_mn<float, 101, 111> cof;
-
-    float cp_memory[100];
-    array_1d_mn<float, 100> cp;
-
-    __host__ __device__ context() :
-    cof(&cof_memory[0][0])
-    , cp(&cp_memory[0])
-    {
-
-    }
+    array_2d_mn_fixed<float, 101, 111> cof;
+    array_1d_mn_fixed<float, 100> cp;
 };
 
 
@@ -73,39 +63,32 @@ struct common_input
   int nupper;
   int nodtot;
 
-  float x_data[101];
-  float y_data[101];
+  array_1d_mn_fixed<float, 101> x;
+  array_1d_mn_fixed<float, 101> y;
 
-  float costhe_data[101];
-  float sinthe_data[101];
-
-  array_1d_mn<float, 101> x;
-  array_1d_mn<float, 101> y;
-
-  array_1d_mn<float, 101> costhe;
-  array_1d_mn<float, 101> sinthe;
+  array_1d_mn_fixed<float, 101> costhe;
+  array_1d_mn_fixed<float, 101> sinthe;
 
   common_input() :
     nlower(zero_int()),
     nupper(zero_int()),
-    nodtot(zero_int()),
-    x(&x_data[0]),
-    y(&y_data[0]),
-    costhe(&costhe_data[0]),
-    sinthe(&sinthe_data[0])
+    nodtot(zero_int())
   {
 
   }
+
+  void patch_pointers()
+  {
+
+  }
+
 };
 
 struct common_output
 {
-  float t_lift_data[10001];
+  array_1d_mn_fixed<float, 10001> t_lift;
 
-  array_1d_mn<float, 10001> t_lift;
-
-  common_output() :
-    t_lift( &t_lift_data[0] )
+  common_output() 
   {}
 };
 
@@ -113,14 +96,11 @@ struct common :
   common_input,
   common_output
 {
-  float cof_memory[101][111];
-  array_2d_mn<float, 101, 111> cof;
+  array_2d_mn_fixed<float, 101, 111> cof;
 
   common(
     int argc,
     char const* argv[])
-  :
-   cof(&cof_memory[0][0])
   {}
 };
 
@@ -799,7 +779,7 @@ program_panel(
   //C
   float tlift = 0.f;
   
-  launch_kernel(cmn, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn);
+  //launch_kernel(cmn, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn);
 
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
   concurrency::parallel_for(1, 10000, [ &t_lift, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn, &cmn ] ( int i )

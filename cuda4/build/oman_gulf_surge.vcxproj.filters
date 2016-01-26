@@ -14,9 +14,6 @@
     <ClCompile Include="..\src\precompiled.cpp">
       <Filter>source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\model.cpp">
-      <Filter>source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\targetver.h">
@@ -40,5 +37,10 @@
     <ClInclude Include="..\src\linear.h">
       <Filter>header files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\src\model.cu">
+      <Filter>source Files</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

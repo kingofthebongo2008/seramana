@@ -16,7 +16,6 @@ typedef array_1d_mn_cpu<float, constants::n > data_arr_float;
 data_arr_float costhe;
 data_arr_float sinthe;
 
-
 struct context
 {
     float cof_memory[101][111];
@@ -69,6 +68,7 @@ struct common_bod
   int nodtot;
   arr<float> x;
   arr<float> y;
+
   common_bod() :
     nlower(zero_int()),
     nupper(zero_int()),
@@ -90,7 +90,6 @@ struct common_commonymous
 };
 
 struct common :
-  fem::common,
   common_bod,
   common_commonymous
 {
@@ -101,8 +100,7 @@ struct common :
     int argc,
     char const* argv[])
   :
-    fem::common(argc, argv)
-    ,cof(&cof_memory[0][0])
+   cof(&cof_memory[0][0])
   {}
 };
 
@@ -224,7 +222,8 @@ body(
 void
 setup( const common_par& par, common& cmn    )
 {
-  common_write write(cmn);
+  fem::common  w;
+  common_write write(w);
   // COMMON bod
   int& nlower = cmn.nlower;
   int& nupper = cmn.nupper;
@@ -656,7 +655,8 @@ program_panel(
 {
   common cmn(argc, argv);
   common_par par;
-  common_write write(cmn);
+  fem::common  w;
+  common_write write(w);
   // COMMON commonymous
   arr_ref<float> t_lift(cmn.t_lift, dimension(10000));
   //

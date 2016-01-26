@@ -92,11 +92,6 @@ struct common :
   common_output
 {
   array_2d_mn_fixed<float, 101, 111> cof;
-
-  common(
-    int argc,
-    char const* argv[])
-  {}
 };
 
 
@@ -731,9 +726,25 @@ void launch_kernel(const common& c, float c_root, float d_chord, float d_s, floa
     auto cb = thrust::make_counting_iterator<std::uint32_t>(0);
     auto ce = cb + 10000 ;
 
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     thrust::for_each(cb, ce, kernel(pointer, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn) );
 
     ::cuda::throw_if_failed(cudaDeviceSynchronize());
+
+    common result;
+    ::cuda::throw_if_failed(cudaMemcpy(&result, pointer, sizeof(result), cudaMemcpyDeviceToHost));
+
+    float tlift = 0.0f;
+    //C
+    FEM_DOSTEP_1(i, 1, 10000, 1) {
+        tlift += result.t_lift(i);
+    }
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    std::cout << "Filtering on devicet took: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
+
+    std::cout << "Total Lift Cuda " << tlift << std::endl;
 }
 
 
@@ -742,7 +753,7 @@ program_panel(
   int argc,
   char const* argv[])
 {
-  common cmn(argc, argv);
+  common cmn;
   common_par par;
   fem::common  w;
   common_write write(w);
@@ -774,7 +785,7 @@ program_panel(
   //C
   float tlift = 0.f;
   
-  //launch_kernel(cmn, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn);
+  launch_kernel(cmn, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn);
 
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
   concurrency::parallel_for(1, 10000, [ &t_lift, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn, &cmn ] ( int i )

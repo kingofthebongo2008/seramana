@@ -6,6 +6,8 @@
 #include <ppl.h>
 #include <chrono>
 
+#define FEM_DO_SAFE_1(x,a,b) for ( int32_t x = a; x<=b; ++x )
+#define FEM_DOSTEP_1(x, a, b, c) for (int32_t x = a; x <= b; x = x + c)
 
 namespace hw {
 
@@ -238,8 +240,8 @@ setup(
   float fract = fem::float0;
   float z = fem::float0;
   int i = fem::int0;
-  FEM_DO_SAFE(nsurf, 1, 2) {
-    FEM_DO_SAFE(n, 1, npoints) {
+  FEM_DO_SAFE_1(nsurf, 1, 2) {
+    FEM_DO_SAFE_1(n, 1, npoints) {
       fract = fem::ffloat(n - 1) / fem::ffloat(npoints);
       z = .5f * (1.f - fem::cos(pi * fract));
       i = nstart + n;
@@ -259,7 +261,7 @@ setup(
   float dx = fem::float0;
   float dy = fem::float0;
   float dist = fem::float0;
-  FEM_DO_SAFE(i, 1, nodtot) {
+  FEM_DO_SAFE_1(i, 1, nodtot) {
     dx = x(i + 1) - x(i);
     dy = y(i + 1) - y(i);
     dist = fem::sqrt(dx * dx + dy * dy);
@@ -311,20 +313,20 @@ cofish(
   //C
   //C  initialize coefficients
   //C
-  FEM_DO_SAFE(j, 1, kutta) {
+  FEM_DO_SAFE_1(j, 1, kutta) {
    c.cof(kutta, j) = 0.0f;
   }
   //C
   //C  set vn=0. at midpoint of ith panel
   //C
-  FEM_DO_SAFE(i, 1, nodtot) {
+  FEM_DO_SAFE_1(i, 1, nodtot) {
     xmid = .5f * (x(i) + x(i + 1));
     ymid = .5f * (y(i) + y(i + 1));
     c.cof(i, kutta) = 0.0f;
     //C
     //C  find contribution of jth panel
     //C
-    FEM_DO_SAFE(j, 1, nodtot) {
+    FEM_DO_SAFE_1(j, 1, nodtot) {
       flog = 0.0f;
       ftan = constant_functions::pi();
       if (j == i) {
@@ -413,21 +415,21 @@ veldis(
   //C
   //C  retrieve solution from a-matrix
   //C
-  FEM_DO_SAFE(i, 1, nodtot) {
+  FEM_DO_SAFE_1(i, 1, nodtot) {
     q(i) = c.cof(i, kutta + 1);
   }
   gamma = c.cof(kutta, kutta + 1);
   //C
   //C  find vt and cp at midpoint of ith panel
   //C
-  FEM_DO_SAFE(i, 1, nodtot) {
+  FEM_DO_SAFE_1(i, 1, nodtot) {
     xmid = .5f * (x(i) + x(i + 1));
     ymid = .5f * (y(i) + y(i + 1));
     vtang = cosalf * costhe(i) + sinalf * sinthe(i);
     //C
     //C  add contributions of jth panel
     //C
-    FEM_DO_SAFE(j, 1, nodtot) {
+    FEM_DO_SAFE_1(j, 1, nodtot) {
       flog = 0.0f;
       ftan = constant_functions::pi();
       if (j == i) {
@@ -481,7 +483,7 @@ fandm(
   float ymid = fem::float0;
   float dx = fem::float0;
   float dy = fem::float0;
-  FEM_DO_SAFE(i, 1, cmn.nodtot) {
+  FEM_DO_SAFE_1(i, 1, cmn.nodtot) {
     xmid = .5f * (x(i) + x(i + 1));
     ymid = .5f * (y(i) + y(i + 1));
     dx = x(i + 1) - x(i);
@@ -546,7 +548,7 @@ gauss(
   //C
   //C  gauss reduction
   //C
-  FEM_DO_SAFE(i, 2, neqns) {
+  FEM_DO_SAFE_1(i, 2, neqns) {
     //C
     //C  search for largest entry in (i-1)th column
     //C  on or below main diagonal
@@ -554,7 +556,7 @@ gauss(
     im = i - 1;
     imax = im;
     amax = fem::abs(c.cof(im, im));
-    FEM_DO_SAFE(j, i, neqns) {
+    FEM_DO_SAFE_1(j, i, neqns) {
       if (amax >= fem::abs(c.cof(j, im))) {
         goto statement_110;
       }
@@ -568,7 +570,7 @@ gauss(
     if (imax != im) {
       goto statement_140;
     }
-    FEM_DO_SAFE(j, im, ntot) {
+    FEM_DO_SAFE_1(j, im, ntot) {
       temp = c.cof(im, j);
       c.cof(im, j) = c.cof(imax, j);
       c.cof(imax, j) = temp;
@@ -578,9 +580,9 @@ gauss(
     //C  ith thru neqnsth equations
     //C
     statement_140:
-    FEM_DO_SAFE(j, i, neqns) {
+    FEM_DO_SAFE_1(j, i, neqns) {
       r = c.cof(j, im) / c.cof(im, im);
-      FEM_DO_SAFE(k, i, ntot) {
+      FEM_DO_SAFE_1(k, i, ntot) {
           c.cof(j, k) = c.cof(j, k) - r * c.cof(im, k);
       }
     }
@@ -588,12 +590,12 @@ gauss(
   //C
   //C  back substitution
   //C
-  FEM_DO_SAFE(k, np, ntot) {
+  FEM_DO_SAFE_1(k, np, ntot) {
       c.cof(neqns, k) = c.cof(neqns, k) / c.cof(neqns, neqns);
-    FEM_DO_SAFE(l, 2, neqns) {
+    FEM_DO_SAFE_1(l, 2, neqns) {
       i = neqns + 1 - l;
       ip = i + 1;
-      FEM_DO_SAFE(j, ip, neqns) {
+      FEM_DO_SAFE_1(j, ip, neqns) {
           c.cof(i, k) = c.cof(i, k) - c.cof(i, j) * c.cof(j, k);
       }
       c.cof(i, k) = c.cof(i, k) / c.cof(i, i);
@@ -708,7 +710,7 @@ program_panel(
   std::cout << "Filtering on host took: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
 
   //C
-  FEM_DOSTEP(i, 1, 10000, 1) {
+  FEM_DOSTEP_1(i, 1, 10000, 1) {
     tlift += t_lift(i);
   }
   //C

@@ -125,12 +125,12 @@ struct common :
 };
 
 
-inline int kutta(const common& c)
+__host__ __device__ inline int kutta(const common& c)
 {
     return c.nodtot + 1;
 }
 
-inline int neqns(const common& c)
+__host__ __device__ inline int neqns(const common& c)
 {
     return kutta(c);
 }
@@ -138,7 +138,7 @@ inline int neqns(const common& c)
 //C
 //C**********************************************************
 //C
-void
+__host__ __device__ void
 naca45(
   const common& cmn,
   const common_par& par,
@@ -369,9 +369,9 @@ cofish(
       dxjp = xmid - x(j + 1);
       dyj = ymid - y(j);
       dyjp = ymid - y(j + 1);
-      flog = .5f * fem::alog((dxjp * dxjp + dyjp * dyjp) / (dxj *
+      flog = .5f * log((dxjp * dxjp + dyjp * dyjp) / (dxj *
         dxj + dyj * dyj));
-      ftan = fem::atan2(dyjp * dxj - dxjp * dyj, dxjp * dxj + dyjp * dyj);
+      ftan = atan2(dyjp * dxj - dxjp * dyj, dxjp * dxj + dyjp * dyj);
       statement_100:
       ctimtj = costhe(i) * costhe(j) + sinthe(i) * sinthe(j);
       stimtj = sinthe(i) * costhe(j) - sinthe(j) * costhe(i);
@@ -476,9 +476,9 @@ veldis(
       dxjp = xmid - x(j + 1);
       dyj = ymid - y(j);
       dyjp = ymid - y(j + 1);
-      flog = .5f * fem::alog((dxjp * dxjp + dyjp * dyjp) / (dxj *
+      flog = .5f * log((dxjp * dxjp + dyjp * dyjp) / (dxj *
         dxj + dyj * dyj));
-      ftan = fem::atan2(dyjp * dxj - dxjp * dyj, dxjp * dxj + dyjp * dyj);
+      ftan = atan2(dyjp * dxj - dxjp * dyj, dxjp * dxj + dyjp * dyj);
       statement_100:
       ctimtj = costhe(i) * costhe(j) + sinthe(i) * sinthe(j);
       stimtj = sinthe(i) * costhe(j) - sinthe(j) * costhe(i);
@@ -683,17 +683,36 @@ indata(
 struct kernel
 {
     common* m_c;
+    float   m_c_root;
+    float   m_d_chord;
+    float   m_d_s;
+    float   m_alpha;
+    float   m_pi;
+    float   m_d_twist;
+    float   m_q_dyn;
 
-    kernel(common* c ) : m_c(c)
+    kernel(common* c, float c_root, float d_chord, float d_s, float alpha, float pi, float d_twist, float q_dyn ) : m_c(c)
     { 
-
+        m_c_root = c_root;
+        m_d_chord = d_chord;
+        m_d_s = d_s;
+        m_alpha = alpha;
+        m_pi = pi;
+        m_d_twist = d_twist;
+        m_q_dyn = q_dyn;
     }
 
     __device__ void operator() (int32_t i)
     {
         common& cmn = *m_c;
 
-        float c_root, float d_chord, float d_s, float alpha, float pi, float d_twist, float q_dyn;
+        float c_root = m_c_root;
+        float d_chord = m_d_chord;
+        float d_s = m_d_s;
+        float alpha = m_alpha;
+        float pi = m_pi;
+        float d_twist = m_d_twist;
+        float q_dyn = m_q_dyn;
 
         context c;
 
@@ -710,7 +729,6 @@ struct kernel
         chord = c_root - d_chord * i;
         area = d_s * chord;
         cmn.t_lift(i) = cl * q_dyn * area;
-
     }
 };
 
@@ -732,12 +750,12 @@ void launch_kernel(const common& c, float c_root, float d_chord, float d_s, floa
 {
     auto pointer = allocate_device_common_buffer(c);
 
-    kernel k(pointer);
+    kernel k(pointer, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn);
 
     auto cb = thrust::make_counting_iterator<std::uint32_t>(1);
     auto ce = cb + 10000;
 
-    thrust::for_each(cb, ce, kernel(pointer)  );
+    thrust::for_each(cb, ce, k );
 
     ::cuda::throw_if_failed(cudaDeviceSynchronize());
 }

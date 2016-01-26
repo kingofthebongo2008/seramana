@@ -88,10 +88,14 @@ struct common_input
 
 struct common_output
 {
-  arr<float> t_lift;
+  arr<float> t_lift1;
+  float t_lift_data[10001];
+
+  array_1d_mn<float, 10001> t_lift;
 
   common_output() :
-    t_lift(dimension(10000), fem::fill0)
+    t_lift1(dimension(10000), fem::fill0),
+    t_lift( &t_lift_data[0] )
   {}
 };
 
@@ -671,8 +675,9 @@ program_panel(
   common_par par;
   fem::common  w;
   common_write write(w);
-  // COMMON commonymous
-  arr_ref<float> t_lift(cmn.t_lift, dimension(10000));
+
+  
+  auto& t_lift = cmn.t_lift;
   //
   //C
   //C        smith-hess panel method for single

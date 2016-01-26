@@ -13,8 +13,8 @@ namespace hw {
 
 typedef array_1d_mn_cpu<float, constants::n > data_arr_float;
 
-data_arr_float costhe;
-data_arr_float sinthe;
+//data_arr_float costhe;
+//data_arr_float sinthe;
 
 struct context
 {
@@ -70,15 +70,23 @@ struct common_input
   float x_data[101];
   float y_data[101];
 
+  float costhe_data[101];
+  float sinthe_data[101];
+
   array_1d_mn<float, 101> x;
   array_1d_mn<float, 101> y;
+
+  array_1d_mn<float, 101> costhe;
+  array_1d_mn<float, 101> sinthe;
 
   common_input() :
     nlower(zero_int()),
     nupper(zero_int()),
     nodtot(zero_int()),
     x(&x_data[0]),
-    y(&y_data[0])
+    y(&y_data[0]),
+    costhe(&costhe_data[0]),
+    sinthe(&sinthe_data[0])
   {
 
   }
@@ -241,6 +249,8 @@ setup( const common_par& par, common& cmn    )
 
   auto& x = cmn.x;
   auto& y = cmn.y;
+  auto& costhe = cmn.costhe;
+  auto& sinthe = cmn.sinthe;
 
   const float pi = constant_functions::pi();
   
@@ -311,6 +321,8 @@ cofish(
   int nodtot = cmn.nodtot;
   const auto& x = cmn.x;
   const auto& y = cmn.y;
+  const auto& costhe = cmn.costhe;
+  const auto& sinthe = cmn.sinthe;
 
   const float  pi2inv = constant_functions::pi2inv();
 
@@ -395,7 +407,7 @@ struct veldis_save
 //C
 void
 veldis(
-  common& cmn,
+  const common& cmn,
   context& c,
   float const& sinalf,
   float const& cosalf)
@@ -405,6 +417,9 @@ veldis(
 
   auto& x = cmn.x;
   auto& y = cmn.y;
+
+  const auto& costhe = cmn.costhe;
+  const auto& sinthe = cmn.sinthe;
 
   //arr_ref<float> cp(cmn.cp, dimension(100));
   const float pi2inv = constant_functions::pi2inv();

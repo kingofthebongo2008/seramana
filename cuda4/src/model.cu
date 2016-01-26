@@ -25,10 +25,12 @@ struct context
     float cof_memory[101][111];
     array_2d_mn<float, 101, 111> cof;
 
-    data_arr_float cp;
+    float cp_memory[100];
+    array_1d_mn<float, 100> cp;
 
     __host__ __device__ context() :
     cof(&cof_memory[0][0])
+    , cp(&cp_memory[0])
     {
 
     }

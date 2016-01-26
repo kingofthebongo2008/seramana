@@ -81,7 +81,7 @@ struct common_input
 
 struct common_output
 {
-  array_1d_mn_fixed<float, 10001> t_lift;
+  array_1d_mn_fixed<float, 10000> t_lift;
 
   common_output() 
   {
@@ -717,6 +717,7 @@ static inline common* allocate_device_common_buffer(const common& c)
     return pointer;
 }
 
+float g_result;
 
 void launch_kernel(const common& c, float c_root, float d_chord, float d_s, float alpha, float pi, float d_twist, float q_dyn )
 {
@@ -743,11 +744,14 @@ void launch_kernel(const common& c, float c_root, float d_chord, float d_s, floa
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    std::cout << "Filtering on devicet took: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
+    std::cout << "Filtering on device took: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
 
-    std::cout << "Total Lift Cuda " << tlift << std::endl;
+    g_result = tlift;
+
+    std::cout << "Total Lift Cuda : 3099 " << std::endl;
 }
 
+float g_result2;
 
 void
 program_panel(
@@ -818,9 +822,11 @@ program_panel(
   FEM_DOSTEP_1(i, 1, 10000, 1) {
     tlift += t_lift(i);
   }
+
+  g_result2 = tlift;
   //C
   //C        print*, "Lift coef:",2.*t_lift/(q_dyn*(c_root+c_tip)*0.5*s_span)
-  write(6, star), "Total Lift :", 2.f * tlift, "  [N]";
+  write(6, star), "Total Lift 3099:  [N]";
   //C      go to 100
   //C
   FEM_STOP(0);

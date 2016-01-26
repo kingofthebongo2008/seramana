@@ -3,8 +3,12 @@
 #include "constants.h"
 #include "arrays.h"
 
+
 #include <ppl.h>
 #include <chrono>
+
+#include <thrust/for_each.h>
+#include "cuda_helper.h"
 
 #define FEM_DO_SAFE_1(x,a,b) for ( int32_t x = a; x<=b; ++x )
 #define FEM_DOSTEP_1(x, a, b, c) for (int32_t x = a; x <= b; x = x + c)
@@ -23,7 +27,7 @@ struct context
 
     data_arr_float cp;
 
-    context() :
+    __host__ __device__ context() :
     cof(&cof_memory[0][0])
     {
 
@@ -33,12 +37,12 @@ struct context
 
 using namespace fem::major_types;
 
-inline int zero_int()
+__host__ __device__ inline int zero_int()
 {
     return 0;
 }
 
-inline float zero_float()
+__host__ __device__ inline float zero_float()
 {
     return 0.0f;
 }
@@ -92,17 +96,13 @@ struct common_input
   }
 };
 
-
-
 struct common_output
 {
-  arr<float> t_lift1;
   float t_lift_data[10001];
 
   array_1d_mn<float, 10001> t_lift;
 
   common_output() :
-    t_lift1(dimension(10000), fem::fill0),
     t_lift( &t_lift_data[0] )
   {}
 };
@@ -158,7 +158,7 @@ naca45(
   if (z < 1.e-10f) {
     goto statement_100;
   }
-  thick = 5.f * par.tau * (.2969f * fem::sqrt(z) - z * (.126f + z * (
+  thick = 5.f * par.tau * (.2969f * sqrt(z) - z * (.126f + z * (
     .3537f - z * (.2843f - z * .1015f))));
   statement_100:
   if (epsmax == 0.f) {
@@ -178,7 +178,7 @@ naca45(
     ptmax) * (1.f - z);
   dcamdx = 2.f * epsmax / fem::pow2((1.f - ptmax)) * (ptmax - z);
   statement_120:
-  beta = fem::atan(dcamdx);
+  beta = atan(dcamdx);
   //C
   return;
   //C
@@ -229,8 +229,8 @@ body(
   float camber = zero_float();
   float beta = zero_float();
   naca45(cmn, par, z, thick, camber, beta);
-  x = z - sign * thick * fem::sin(beta);
-  y = camber + sign * thick * fem::cos(beta);
+  x = z - sign * thick * sin(beta);
+  y = camber + sign * thick * cos(beta);
   //C
 }
 
@@ -268,7 +268,7 @@ setup( const common_par& par, common& cmn    )
   FEM_DO_SAFE_1(nsurf, 1, 2) {
     FEM_DO_SAFE_1(n, 1, npoints) {
       fract = fem::ffloat(n - 1) / fem::ffloat(npoints);
-      z = .5f * (1.f - fem::cos(pi * fract));
+      z = .5f * (1.f - cos(pi * fract));
       i = nstart + n;
       float xa;
       float ya;
@@ -310,7 +310,7 @@ struct cofish_save
 //C
 //C**********************************************************
 //C
-void
+__host__ __device__ void
 cofish(
   const common& cmn,
   float sinalf,
@@ -405,7 +405,7 @@ struct veldis_save
 //C
 //C**********************************************************
 //C
-void
+__host__ __device__ void
 veldis(
   const common& cmn,
   context& c,
@@ -493,7 +493,7 @@ veldis(
 //C
 //C**********************************************************
 //C
-void
+__host__ __device__ void
 fandm(
   const common& cmn,
   const context& c,
@@ -545,7 +545,7 @@ struct gauss_save
 //C
 //C**********************************************************
 //C
-void
+__host__ __device__ void
 gauss(
     const common& cmn,
     context& c,
@@ -586,7 +586,7 @@ gauss(
     imax = im;
     amax = fem::abs(c.cof(im, im));
     FEM_DO_SAFE_1(j, i, neqns) {
-      if (amax >= fem::abs(c.cof(j, im))) {
+      if (amax >= abs(c.cof(j, im))) {
         goto statement_110;
       }
       imax = j;
@@ -678,6 +678,69 @@ indata(
   //C
 }
 
+struct kernel
+{
+    common* m_c;
+
+    kernel(common* c ) : m_c(c)
+    { 
+
+    }
+
+    __device__ void operator() (int32_t i)
+    {
+        common& cmn = *m_c;
+
+        float c_root, float d_chord, float d_s, float alpha, float pi, float d_twist, float q_dyn;
+
+        context c;
+
+        float chord = zero_float();
+        float area = zero_float();
+        float cl = zero_float();
+        //C
+        auto cosalf = cos((alpha - (d_twist * (i - 1)))  * pi / 180.f);
+        auto sinalf = sin((alpha - (d_twist * (i - 1)))  * pi / 180.f);
+        cofish(cmn, sinalf, cosalf, c);
+        gauss(cmn, c, 1);
+        veldis(cmn, c, sinalf, cosalf);
+        fandm(cmn, c, sinalf, cosalf, cl);
+        chord = c_root - d_chord * i;
+        area = d_s * chord;
+        cmn.t_lift(i) = cl * q_dyn * area;
+
+    }
+};
+
+
+static inline common* allocate_device_common_buffer(const common& c)
+{
+    common* pointer;
+    size_t  s = sizeof(common);
+
+    ::cuda::throw_if_failed(cudaMalloc(&pointer, s));
+    ::cuda::throw_if_failed(cudaMemset(pointer, 0, s));
+    ::cuda::throw_if_failed(cudaMemcpy(pointer, &c, s, cudaMemcpyHostToDevice));
+
+    return pointer;
+}
+
+
+void launch_kernel(const common& c, float c_root, float d_chord, float d_s, float alpha, float pi, float d_twist, float q_dyn )
+{
+    auto pointer = allocate_device_common_buffer(c);
+
+    kernel k(pointer);
+
+    auto cb = thrust::make_counting_iterator<std::uint32_t>(1);
+    auto ce = cb + 10000;
+
+    thrust::for_each(cb, ce, kernel(pointer)  );
+
+    ::cuda::throw_if_failed(cudaDeviceSynchronize());
+}
+
+
 void
 program_panel(
   int argc,
@@ -725,8 +788,8 @@ program_panel(
           float area = zero_float();
           float cl = zero_float();
           //C
-          auto cosalf = fem::cos( (alpha - (d_twist * (i - 1)))  * pi / 180.f);
-          auto sinalf = fem::sin( (alpha - (d_twist * (i - 1)))  * pi / 180.f);
+          auto cosalf = cos( (alpha - (d_twist * (i - 1)))  * pi / 180.f);
+          auto sinalf = sin( (alpha - (d_twist * (i - 1)))  * pi / 180.f);
           cofish(cmn, sinalf, cosalf, c);
           gauss(cmn, c, 1);
           veldis(cmn, c, sinalf, cosalf);

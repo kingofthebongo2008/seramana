@@ -108,12 +108,12 @@ namespace hw
 
     public:
 
-        array_1d_mn(t* memory_buffer) : m_data(memory_buffer)
+        __host__ __device__ array_1d_mn(t* memory_buffer) : m_data(memory_buffer)
         {
 
         }
 
-        inline t& operator() (int32_t index)
+        __host__ __device__ inline t& operator() (int32_t index)
         {
             assert(index > 0);
             assert(index <= size);
@@ -121,7 +121,7 @@ namespace hw
         }
 
         
-        inline t operator() (int32_t index) const
+        __host__ __device__ inline t operator() (int32_t index) const
         {
             assert(index > 0);
             assert(index <= size);
@@ -129,22 +129,22 @@ namespace hw
         }
         
 
-        inline const t* begin() const
+        __host__ __device__ inline const t* begin() const
         {
             return m_data;
         }
 
-        inline t* begin()
+        __host__ __device__ inline t* begin()
         {
             return m_data;
         }
 
-        inline const t* end() const
+        __host__ __device__ inline const t* end() const
         {
             return begin() + size;
         }
 
-        inline t* end()
+        __host__ __device__ inline t* end()
         {
             return begin() + size;
         }

@@ -625,7 +625,7 @@ namespace fem {
     double const& v3) { return max(max(v1, v2), v3); }
 
   template <typename T>
-  inline
+  __host__ __device__ inline
   T
   pow2(
     T const& base) { return base * base; }

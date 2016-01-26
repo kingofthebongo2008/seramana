@@ -99,6 +99,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\extern\fable\fem\test.cpp" />
     <ClCompile Include="..\src\precompiled.cpp" />
   </ItemGroup>
   <ItemGroup>

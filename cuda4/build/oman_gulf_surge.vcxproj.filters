@@ -14,6 +14,9 @@
     <ClCompile Include="..\src\precompiled.cpp">
       <Filter>source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\extern\fable\fem\test.cpp">
+      <Filter>source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\targetver.h">

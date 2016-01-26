@@ -13,6 +13,8 @@
 #define FEM_DO_SAFE_1(x,a,b) for ( int32_t x = a; x<=b; ++x )
 #define FEM_DOSTEP_1(x, a, b, c) for (int32_t x = a; x <= b; x = x + c)
 
+std::string format_result(float result);
+
 namespace hw {
 
 //temporary arrays
@@ -751,7 +753,7 @@ void launch_kernel(const common& c, float c_root, float d_chord, float d_s, floa
 
     g_result = tlift;
 
-    std::cout << "Total Lift Cuda : 3099 " << std::endl;
+    std::cout << "Total Lift Cuda : " << format_result(tlift) << std::endl;
 }
 
 float g_result2;
@@ -831,7 +833,8 @@ program_panel(
   g_result2 = tlift;
   //C
   //C        print*, "Lift coef:",2.*t_lift/(q_dyn*(c_root+c_tip)*0.5*s_span)
-  write(6, star), "Total Lift 3099:  [N]";
+  std::cout << "Total lift: " << format_result(tlift) << std::endl;
+  
   //C      go to 100
   //C
   FEM_STOP(0);

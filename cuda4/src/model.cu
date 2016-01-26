@@ -39,7 +39,7 @@ inline int zero_int()
     return 0;
 }
 
-inline int zero_float()
+inline float zero_float()
 {
     return 0.0f;
 }

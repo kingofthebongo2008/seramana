@@ -152,38 +152,38 @@ namespace hw
 
     
     template < typename t, int32_t size >
-    class array_1d_mn_cpu
+    class array_1d_mn_fixed
     {
         t m_data[size];
 
     public:
 
-        inline t& operator() (int32_t index)
+        __host__ __device__ inline t& operator() (int32_t index)
         {
             return m_data[index - 1];
         }
 
-        inline t operator() (int32_t index) const
+        __host__ __device__  inline t operator() (int32_t index) const
         {
             return m_data[index - 1];
         }
 
-        inline const t* begin() const
+        __host__ __device__  inline const t* begin() const
         {
             return &m_data[0];
         }
 
-        inline t* begin()
+        __host__ __device__  inline t* begin()
         {
             return &m_data[0];
         }
 
-        inline const t* end() const
+        __host__ __device__  inline const t* end() const
         {
             return begin() + sizeof(m_data) / sizeof(t);
         }
 
-        inline t* end()
+        __host__ __device__  inline t* end()
         {
             return begin() + sizeof(m_data) / sizeof(t);
         }

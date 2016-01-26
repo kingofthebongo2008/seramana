@@ -15,7 +15,7 @@
 
 namespace hw {
 
-typedef array_1d_mn_cpu<float, constants::n > data_arr_float;
+
 
 //data_arr_float costhe;
 //data_arr_float sinthe;
@@ -427,7 +427,7 @@ veldis(
   const float pi2inv = constant_functions::pi2inv();
 
   int i = zero_int();
-  arr_1d<150, float> q(fem::fill0);
+  array_1d_mn_fixed<float, 150> q;
   float gamma = zero_float();
   float xmid = zero_float();
   float ymid = zero_float();

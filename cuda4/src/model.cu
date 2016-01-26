@@ -60,7 +60,7 @@ struct common_par
   {}
 };
 
-common_par  par;
+
 
 struct common_bod
 {
@@ -222,8 +222,7 @@ body(
 //C**********************************************************
 //C
 void
-setup(
-  common& cmn)
+setup( const common_par& par, common& cmn    )
 {
   common_write write(cmn);
   // COMMON bod
@@ -656,6 +655,7 @@ program_panel(
   char const* argv[])
 {
   common cmn(argc, argv);
+  common_par par;
   common_write write(cmn);
   // COMMON commonymous
   arr_ref<float> t_lift(cmn.t_lift, dimension(10000));
@@ -668,7 +668,7 @@ program_panel(
   float pi = 3.1415926585f;
   //C
   indata(cmn, par);
-  setup(cmn);
+  setup(par, cmn);
   //C
   float alpha = 5;
   float twist = 5;

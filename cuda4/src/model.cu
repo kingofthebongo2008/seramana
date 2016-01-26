@@ -691,7 +691,7 @@ struct kernel
     float   m_d_twist;
     float   m_q_dyn;
 
-    kernel(common* c, float c_root, float d_chord, float d_s, float alpha, float pi, float d_twist, float q_dyn ) : m_c(c)
+    __host__ kernel(common* c, float c_root, float d_chord, float d_s, float alpha, float pi, float d_twist, float q_dyn ) : m_c(c)
     { 
         m_c_root = c_root;
         m_d_chord = d_chord;
@@ -704,6 +704,7 @@ struct kernel
 
     __device__ void operator() (int32_t i)
     {
+        i = i + 1;
         common& cmn = *m_c;
 
         float c_root = m_c_root;
@@ -752,10 +753,10 @@ void launch_kernel(const common& c, float c_root, float d_chord, float d_s, floa
 
     kernel k(pointer, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn);
 
-    auto cb = thrust::make_counting_iterator<std::uint32_t>(1);
-    auto ce = cb + 10000;
+    auto cb = thrust::make_counting_iterator<std::uint32_t>(0);
+    auto ce = cb + 10000 ;
 
-    thrust::for_each(cb, ce, k );
+    thrust::for_each(cb, ce, kernel(pointer, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn) );
 
     ::cuda::throw_if_failed(cudaDeviceSynchronize());
 }
@@ -798,6 +799,7 @@ program_panel(
   //C
   float tlift = 0.f;
   
+  launch_kernel(cmn, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn);
 
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
   concurrency::parallel_for(1, 10000, [ &t_lift, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn, &cmn ] ( int i )

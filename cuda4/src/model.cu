@@ -15,6 +15,7 @@
 
 namespace hw {
 
+//temporary arrays
 struct context
 {
     array_2d_mn_fixed<float, 101, 111> cof;
@@ -52,6 +53,7 @@ struct common_par
 
 
 
+//holds input data for the calculations
 struct common_input
 {
   int nlower;
@@ -79,6 +81,7 @@ struct common_input
 
 };
 
+//holds results of the calculations
 struct common_output
 {
   array_1d_mn_fixed<float, 10000> t_lift;
@@ -797,6 +800,8 @@ program_panel(
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
   concurrency::parallel_for(1, 10000, [ &t_lift, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn, &cmn ] ( int i )
   {
+          //this is executed 10000 times
+
           context c;
 
           float chord = zero_float();

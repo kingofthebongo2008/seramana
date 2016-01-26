@@ -84,7 +84,8 @@ struct common_output
   array_1d_mn_fixed<float, 10001> t_lift;
 
   common_output() 
-  {}
+  {
+  }
 };
 
 struct common :
@@ -699,7 +700,7 @@ struct kernel
         fandm(cmn, c, sinalf, cosalf, cl);
         chord = c_root - d_chord * i;
         area = d_s * chord;
-        cmn.t_lift(i) = cl * q_dyn * area;
+        cmn.t_lift(i) = cl;// *q_dyn * area;
     }
 };
 
@@ -785,8 +786,10 @@ program_panel(
   //C
   float tlift = 0.f;
   
+  //parallel: launch the algorithm on cuda
   launch_kernel(cmn, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn);
 
+  //parallel: cpu parallel code
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
   concurrency::parallel_for(1, 10000, [ &t_lift, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn, &cmn ] ( int i )
   {
@@ -804,7 +807,7 @@ program_panel(
           fandm(cmn, c, sinalf, cosalf, cl);
           chord = c_root - d_chord * i;
           area = d_s * chord;
-          t_lift(i) = cl * q_dyn * area;
+          t_lift(i) = cl;// *q_dyn * area;
   });
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();

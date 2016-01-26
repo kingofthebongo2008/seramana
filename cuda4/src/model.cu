@@ -536,9 +536,6 @@ gauss(
     context& c,
     int nrhs)
 {
-  //FEM_CMN_SVE(gauss);
-  
- 
   int np = zero_int();
   int ntot = zero_int();
   int i = zero_int();

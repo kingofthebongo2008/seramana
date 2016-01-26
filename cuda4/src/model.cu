@@ -15,11 +15,6 @@
 
 namespace hw {
 
-
-
-//data_arr_float costhe;
-//data_arr_float sinthe;
-
 struct context
 {
     array_2d_mn_fixed<float, 101, 111> cof;

@@ -61,37 +61,43 @@ struct common_par
 
 
 
-struct common_bod
+struct common_input
 {
   int nlower;
   int nupper;
   int nodtot;
-  arr<float> x;
-  arr<float> y;
 
-  common_bod() :
+  float x_data[101];
+  float y_data[101];
+
+  array_1d_mn<float, 101> x;
+  array_1d_mn<float, 101> y;
+
+  common_input() :
     nlower(zero_int()),
     nupper(zero_int()),
     nodtot(zero_int()),
-    x(dimension(100), fem::fill0),
-    y(dimension(100), fem::fill0)
-  {}
+    x(&x_data[0]),
+    y(&y_data[0])
+  {
+
+  }
 };
 
 
 
-struct common_commonymous
+struct common_output
 {
   arr<float> t_lift;
 
-  common_commonymous() :
+  common_output() :
     t_lift(dimension(10000), fem::fill0)
   {}
 };
 
 struct common :
-  common_bod,
-  common_commonymous
+  common_input,
+  common_output
 {
   float cof_memory[101][111];
   array_2d_mn<float, 101, 111> cof;
@@ -228,8 +234,9 @@ setup( const common_par& par, common& cmn    )
   int& nlower = cmn.nlower;
   int& nupper = cmn.nupper;
   int& nodtot = cmn.nodtot;
-  arr_ref<float> x(cmn.x, dimension(100));
-  arr_ref<float> y(cmn.y, dimension(100));
+
+  auto& x = cmn.x;
+  auto& y = cmn.y;
 
   const float pi = constant_functions::pi();
   
@@ -249,7 +256,13 @@ setup( const common_par& par, common& cmn    )
       fract = fem::ffloat(n - 1) / fem::ffloat(npoints);
       z = .5f * (1.f - fem::cos(pi * fract));
       i = nstart + n;
-      body(cmn, par, z, sign, x(i), y(i));
+      float xa;
+      float ya;
+
+      body(cmn, par, z, sign, xa, ya);
+      x(i) = xa;
+      y(i) = ya;
+
       write(6, "(f8.4,f10.4)"), x(i), y(i);
     }
     npoints = nupper;
@@ -292,8 +305,8 @@ cofish(
 {
   //FEM_CMN_SVE(cofish);
   int nodtot = cmn.nodtot;
-  arr_cref<float> x(cmn.x, dimension(100));
-  arr_cref<float> y(cmn.y, dimension(100));
+  const auto& x = cmn.x;
+  const auto& y = cmn.y;
 
   const float  pi2inv = constant_functions::pi2inv();
 
@@ -385,8 +398,9 @@ veldis(
 {
   //FEM_CMN_SVE(veldis);
   const int& nodtot = cmn.nodtot;
-  arr_cref<float> x(cmn.x, dimension(100));
-  arr_cref<float> y(cmn.y, dimension(100));
+
+  auto& x = cmn.x;
+  auto& y = cmn.y;
 
   //arr_ref<float> cp(cmn.cp, dimension(100));
   const float pi2inv = constant_functions::pi2inv();
@@ -468,8 +482,8 @@ fandm(
   float const& cosalf,
   float& cl)
 {
-  arr_cref<float> x(cmn.x, dimension(100));
-  arr_cref<float> y(cmn.y, dimension(100));
+    const auto& x = cmn.x;
+    const auto& y = cmn.y;
   // COMMON cpd
 //  arr_cref<float> cp(cmn.cp, dimension(100));
   //

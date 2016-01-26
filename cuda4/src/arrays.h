@@ -1,7 +1,9 @@
 #ifndef __arrays_h__
 #define __arrays_h__
 
+#include <assert.h>
 #include <cstdint>
+
 
 
 #include "cuda_defines.h"
@@ -113,13 +115,19 @@ namespace hw
 
         inline t& operator() (int32_t index)
         {
-            return m_data + index - 1;
+            assert(index > 0);
+            assert(index <= size);
+            return m_data[index - 1];
         }
 
+        
         inline t operator() (int32_t index) const
         {
-            return m_data + index - 1;
+            assert(index > 0);
+            assert(index <= size);
+            return m_data[index - 1];
         }
+        
 
         inline const t* begin() const
         {

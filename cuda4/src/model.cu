@@ -34,6 +34,17 @@ struct context
 
 using namespace fem::major_types;
 
+inline int zero_int()
+{
+    return 0;
+}
+
+inline int zero_float()
+{
+    return 0.0f;
+}
+
+
 struct common_par
 {
   int naca;
@@ -42,10 +53,10 @@ struct common_par
   float ptmax;
 
   common_par() :
-    naca(fem::int0),
-    tau(fem::float0),
-    epsmax(fem::float0),
-    ptmax(fem::float0)
+    naca(zero_int()),
+    tau(zero_float()),
+    epsmax(zero_float()),
+    ptmax(zero_float())
   {}
 };
 
@@ -59,9 +70,9 @@ struct common_bod
   arr<float> x;
   arr<float> y;
   common_bod() :
-    nlower(fem::int0),
-    nupper(fem::int0),
-    nodtot(fem::int0),
+    nlower(zero_int()),
+    nupper(zero_int()),
+    nodtot(zero_int()),
     x(dimension(100), fem::fill0),
     y(dimension(100), fem::fill0)
   {}
@@ -83,10 +94,6 @@ struct common :
   common_bod,
   common_commonymous
 {
-  fem::cmn_sve cofish_sve;
-  fem::cmn_sve veldis_sve;
-  fem::cmn_sve gauss_sve;
-
   float cof_memory[101][111];
   array_2d_mn<float, 101, 111> cof;
 
@@ -125,8 +132,8 @@ naca45(
   float epsmax = par.epsmax;
   float ptmax = par.ptmax;
   //
-  float dcamdx = fem::float0;
-  float w = fem::float0;
+  float dcamdx = zero_float();
+  float w = zero_float();
   //C
   //C  evaluate thickness and camber
   //C  for naca 4- or 5-digit airfoil
@@ -202,9 +209,9 @@ body(
   if (sign < 0.f) {
     z = 1.f - z;
   }
-  float thick = fem::float0;
-  float camber = fem::float0;
-  float beta = fem::float0;
+  float thick = zero_float();
+  float camber = zero_float();
+  float beta = zero_float();
   naca45(cmn, par, z, thick, camber, beta);
   x = z - sign * thick * fem::sin(beta);
   y = camber + sign * thick * fem::cos(beta);
@@ -235,11 +242,10 @@ setup(
   int npoints = nlower;
   float sign = -1.0f;
   int nstart = 0;
-  int nsurf = fem::int0;
-  int n = fem::int0;
-  float fract = fem::float0;
-  float z = fem::float0;
-  int i = fem::int0;
+  int n = zero_int();
+  float fract = zero_float();
+  float z = zero_float();
+  int i = zero_int();
   FEM_DO_SAFE_1(nsurf, 1, 2) {
     FEM_DO_SAFE_1(n, 1, npoints) {
       fract = fem::ffloat(n - 1) / fem::ffloat(npoints);
@@ -258,9 +264,9 @@ setup(
   //C
   //C  set slopes of panels
   //C
-  float dx = fem::float0;
-  float dy = fem::float0;
-  float dist = fem::float0;
+  float dx = zero_float();
+  float dy = zero_float();
+  float dist = zero_float();
   FEM_DO_SAFE_1(i, 1, nodtot) {
     dx = x(i + 1) - x(i);
     dy = y(i + 1) - y(i);
@@ -293,19 +299,17 @@ cofish(
 
   const float  pi2inv = constant_functions::pi2inv();
 
-  int j = fem::int0;
-  int i = fem::int0;
-  float xmid = fem::float0;
-  float ymid = fem::float0;
-  float flog = fem::float0;
-  float ftan = fem::float0;
-  float dxj = fem::float0;
-  float dxjp = fem::float0;
-  float dyj = fem::float0;
-  float dyjp = fem::float0;
-  float ctimtj = fem::float0;
-  float stimtj = fem::float0;
-  float b = fem::float0;
+  float xmid = zero_float();
+  float ymid = zero_float();
+  float flog = zero_float();
+  float ftan = zero_float();
+  float dxj = zero_float();
+  float dxjp = zero_float();
+  float dyj = zero_float();
+  float dyjp = zero_float();
+  float ctimtj = zero_float();
+  float stimtj = zero_float();
+  float b = zero_float();
   //C
   //C  set coefficients of linear system
   //C
@@ -389,23 +393,23 @@ veldis(
   //arr_ref<float> cp(cmn.cp, dimension(100));
   const float pi2inv = constant_functions::pi2inv();
 
-  int i = fem::int0;
+  int i = zero_int();
   arr_1d<150, float> q(fem::fill0);
-  float gamma = fem::float0;
-  float xmid = fem::float0;
-  float ymid = fem::float0;
-  float vtang = fem::float0;
-  int j = fem::int0;
-  float flog = fem::float0;
-  float ftan = fem::float0;
-  float dxj = fem::float0;
-  float dxjp = fem::float0;
-  float dyj = fem::float0;
-  float dyjp = fem::float0;
-  float ctimtj = fem::float0;
-  float stimtj = fem::float0;
-  float aa = fem::float0;
-  float b = fem::float0;
+  float gamma = zero_float();
+  float xmid = zero_float();
+  float ymid = zero_float();
+  float vtang = zero_float();
+  int j = zero_int();
+  float flog = zero_float();
+  float ftan = zero_float();
+  float dxj = zero_float();
+  float dxjp = zero_float();
+  float dyj = zero_float();
+  float dyjp = zero_float();
+  float ctimtj = zero_float();
+  float stimtj = zero_float();
+  float aa = zero_float();
+  float b = zero_float();
 
   auto kutta = hw::kutta(cmn);
   //C
@@ -478,11 +482,11 @@ fandm(
   float cfy = 0.0f;
   float cm = 0.0f;
   //C
-  int i = fem::int0;
-  float xmid = fem::float0;
-  float ymid = fem::float0;
-  float dx = fem::float0;
-  float dy = fem::float0;
+  int i = zero_int();
+  float xmid = zero_float();
+  float ymid = zero_float();
+  float dx = zero_float();
+  float dy = zero_float();
   FEM_DO_SAFE_1(i, 1, cmn.nodtot) {
     xmid = .5f * (x(i) + x(i + 1));
     ymid = .5f * (y(i) + y(i + 1));
@@ -519,18 +523,15 @@ gauss(
   //FEM_CMN_SVE(gauss);
   
  
-  int np = fem::int0;
-  int ntot = fem::int0;
-  int i = fem::int0;
-  int im = fem::int0;
-  int imax = fem::int0;
-  float amax = fem::float0;
-  int j = fem::int0;
-  float temp = fem::float0;
-  float r = fem::float0;
-  int k = fem::int0;
-  int l = fem::int0;
-  int ip = fem::int0;
+  int np = zero_int();
+  int ntot = zero_int();
+  int i = zero_int();
+  int im = zero_int();
+  int imax = zero_int();
+  float amax = zero_float();
+  float temp = zero_float();
+  float r = zero_float();
+  int ip = zero_int();
   //C
   //C  solution of linear algebraic system by
   //C  gaussian elimination with partial pivoting
@@ -682,17 +683,16 @@ program_panel(
   float d_chord = (c_root - c_tip) / 10000.f;
   //C
   float tlift = 0.f;
-  //C
-  int i = fem::int0;
+  
 
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
   concurrency::parallel_for(1, 10000, [ &t_lift, c_root, d_chord, d_s, alpha, pi, d_twist, q_dyn, &cmn ] ( int i )
   {
           context c;
 
-          float chord = fem::float0;
-          float area = fem::float0;
-          float cl = fem::float0;
+          float chord = zero_float();
+          float area = zero_float();
+          float cl = zero_float();
           //C
           auto cosalf = fem::cos( (alpha - (d_twist * (i - 1)))  * pi / 180.f);
           auto sinalf = fem::sin( (alpha - (d_twist * (i - 1)))  * pi / 180.f);
